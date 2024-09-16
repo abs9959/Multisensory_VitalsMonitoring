@@ -84,14 +84,14 @@ class VitalSignsMonitor:
                 # Apply black background to the plots and set white elements
                 for ax in self.axs:
                     ax.set_facecolor('black')
-                    ax.spines['bottom'].set_color('white')
-                    ax.spines['top'].set_color('white')
-                    ax.spines['right'].set_color('white')
-                    ax.spines['left'].set_color('white')
-                    ax.yaxis.label.set_color('white')
-                    ax.xaxis.label.set_color('white')
-                    ax.tick_params(axis='y', colors='white')
-                    ax.tick_params(axis='x', colors='white')
+                    ax.spines['bottom'].set_color('black')
+                    ax.spines['top'].set_color('black')
+                    ax.spines['right'].set_color('black')
+                    ax.spines['left'].set_color('black')
+                    ax.yaxis.label.set_color('black')
+                    ax.xaxis.label.set_color('black')
+                    ax.tick_params(axis='y', colors='black')
+                    ax.tick_params(axis='x', colors='black')
 
                 # Update labels with current values without adding labels
                 self.hr_label.config(text=f"{heart_rate:.1f} BPM")
