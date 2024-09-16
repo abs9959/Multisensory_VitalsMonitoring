@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 import numpy as np
+import neurokit2 as nk
 
 class VitalSignsMonitor:
     def __init__(self, root, data):
@@ -43,26 +44,11 @@ class VitalSignsMonitor:
 
         self.update_plot_loop()
 
-    def generate_ekg_wave(self, bpm, duration=5):
-        # Generate a basic EKG-like wave
-        fs = 500  # Sampling frequency (Hz)
-        #t = np.arange(0, duration, 1/fs)
-        t = np.linspace(0, duration, int(fs * duration), endpoint=False)
-        def ekg_template(t):
-            return (
-                1.2 * np.sin(2 * np.pi * 1 * t) -           # P-wave
-                5.0 * np.sin(2 * np.pi * 5 * t + 0.1) +     # Q-wave
-                30.0 * np.sin(2 * np.pi * 10 * t + 0.2) +   # R-wave
-                -7.5 * np.sin(2 * np.pi * 15 * t + 0.3) +   # S-wave
-                0.75 * np.sin(2 * np.pi * 1.5 * t + 0.4)    # T-wave
-            )
-        single_beat = ekg_template(t)
-        pulse_interval = int(fs * 60 / bpm)
-        ekg_wave = np.tile(single_beat, int(np.ceil(len(t) / pulse_interval)))[:len(t)]
-        '''pulse_interval = 60 / bpm
-        pulse = np.sin(2 * np.pi * t / pulse_interval)
-        pulse[pulse < 0] = 0  # Clip negative values'''
-        return t, ekg_wave
+    def generate_neurokit_ecg(self, heart_rate, duration=5):
+        """Generate ECG signal using NeuroKit."""
+        ecg_signal = nk.ecg_simulate(duration=duration, heart_rate=heart_rate, noise=0.01)
+        time_range = np.linspace(0, duration, len(ecg_signal))
+        return time_range, ecg_signal
 
     def update_plot_loop(self):
         if self.data is not None:
@@ -83,12 +69,12 @@ class VitalSignsMonitor:
                 for ax in self.axs:
                     ax.clear()
 
-                # Plot EKG-like wave in the first and second rows (neon green)
+                # Plot NeuroKit ECG simulation in the first and second rows (neon green)
                 if heart_rate > 0:
-                    time_range, ekg_wave = self.generate_ekg_wave(heart_rate)
-                    self.axs[0].plot(time_range + self.times[-1], ekg_wave, 'lime', lw=1.5, label='EKG Pulse')  # Neon green
+                    time_range, ecg_signal = self.generate_neurokit_ecg(heart_rate)
+                    self.axs[0].plot(time_range + self.times[-1], ecg_signal, 'lime', lw=1.5, label='EKG Pulse')  # Neon green
                     self.axs[0].set_facecolor('black')
-                    self.axs[1].plot(time_range + self.times[-1], ekg_wave, 'lime', label='EKG Pulse')  # Neon green
+                    self.axs[1].plot(time_range + self.times[-1], ecg_signal, 'lime', label='EKG Pulse')  # Neon green
                     self.axs[1].set_facecolor('black')
 
                 # Plot Oxygen Saturation as a line graph (bright blue)
