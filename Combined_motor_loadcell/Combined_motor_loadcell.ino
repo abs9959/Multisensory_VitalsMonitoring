@@ -28,8 +28,7 @@ HX711 scale;
 float calibrationFactor = 0;      // Variable to store the calibration factor
 const float knownMass = 0.285;    // Mass in kilograms for calibration
 const float gravity = 9.81;       // Acceleration due to gravity (m/s^2)
-
-
+float targetForce = 10.0; 
 
 void setup() {
   // Setup for motor control
@@ -56,55 +55,40 @@ void setup() {
 }
 
 
-
 void loop() {
-  isHighMode = false;
-  isLowMode = false;
-  tighten = false;
-  loosen = false;
-
   if (Serial.available() > 0) {
-    String input = Serial.readStringUntil('\n');
+    // Reset control flags
+    isHighMode = false;
+    isLowMode = false;
+    tighten = false;
+    loosen = false;
+    normal = false;
+
+    String input = Serial.readStringUntil('\n').trim(); // trim() removes any extraneous newline or whitespace characters
 
     // Handle motor control commands
-    // high pressure indicator
     if (input.equals("h")) {
       isHighMode = true;
-      isLowMode = false;
-      tighten = false;
-      loosen = false;
+      motorControl();
 
-    // low pressure indicator
     } else if (input.equals("l")) {
-      isHighMode = false;
       isLowMode = true;
-      tighten = false;
-      loosen = false;
+      motorControl();
 
-    // tighten
     } else if (input.equals("t")) {
-      isHighMode = false;
-      isLowMode = false;
       tighten = true;
-      loosen = false;
+      motorControl();
 
-    // loosen
     } else if (input.equals("ls")) {
-      isHighMode = false;
-      isLowMode = false;
-      tighten = false;
       loosen = true;
+      motorControl();
 
-    // neutral
     } else if (input.equals("n")) {
-      isHighMode = false;
-      isLowMode = false;
-      tighten = false;
-      loosen = false;
+      normal = true;
+      motorControl();
     }
     
     // Handle load cell commands
-    // measure
     else if (input.equals("m")) { 
       Serial.println("Taking 3 measurements...");
       for (int i = 0; i < 3; i++) {
@@ -116,20 +100,28 @@ void loop() {
         Serial.println(" N"); // Display force in Newtons
         delay(1000);  // Delay between measurements
       }
-    // recalibrate
+
     } else if (input.equals("r")) { 
       recalibrate();
+
+    } else if (input.equals("f")) {
+      Serial.print("Target force: ");
+      while (Serial.available() == 0); // Wait for input
+      String targetInput = Serial.readStringUntil('\n').trim(); // Read user input for target force
+      float targetForce = targetInput.toFloat(); // Convert the input to a float
+
+      // Check if the conversion was successful (ensure targetForce is not NaN)
+      if (targetForce != 0 || targetInput.equals("0")) {  // Valid check for 0 as well
+        adjustMotorToForce(targetForce);
+      } else {
+        Serial.println("Invalid force input. Please provide a numeric value.");
+      }
     }
   }
-  
-  // Motor control logic
-  motorControl();
 }
 
 
-
 // Functions
-
 // Motor Control Function
 void motorControl() {
   if (isHighMode) {
@@ -163,7 +155,7 @@ void motorControl() {
     digitalWrite(MotRev, LOW); 
     digitalWrite(MotFwd, HIGH);
     delay(2200); 
-  } else {
+  } else if (normal) {
     digitalWrite(MotFwd, LOW); 
     digitalWrite(MotRev, LOW); // No rotation
     delay(1000); // Delay in normal mode
@@ -234,4 +226,40 @@ void recalibrate() {
   else {
     Serial.println("HX711 not found. Recalibration failed.");
   }
+}
+
+
+void adjustMotorToForce(float targetForce) {
+  bool notReached = true;
+  float threshold = 0.1;  // N of noise, determined based on resolution
+
+  while (notReached) {
+    float currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
+    Serial.print("Current Force: ");
+    Serial.println(currentForce);
+
+    if (abs(targetForce - currentForce) <= threshold) {
+      notReached = false;
+      break;  // Target force has been reached within the threshold
+    } 
+    else {
+      if (currentForce < targetForce) {
+        tighten = true;
+        motorControl(); 
+        tighten = false;
+      }
+      else {
+        loosen = true;
+        motorControl(); 
+        loosen = false;
+      }
+
+      delay(100);  // Add a small delay to stabilize readings
+    }
+  }
+
+  // Final force reading after loop ends 
+  float finalForce = scale.get_units(10); 
+  Serial.print("Final Force: ");
+  Serial.println(finalForce);
 }
