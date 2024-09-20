@@ -10,6 +10,7 @@ long homePosition = 0;           // Variable to store the initial position.
 bool isHighMode = false;         // Flag to indicate high mode.
 bool isLowMode = false;          // Flag to indicate low mode.
 bool tighten = false;
+bool loosen = false;
 
 void setup() {
   pinMode(MotFwd, OUTPUT); 
@@ -72,6 +73,13 @@ void loop() {
     delay(2200); // Quick clockwise turns.
   }
   
+  else if (loosen) {
+    Serial.println("Looseining");
+    digitalWrite(MotRev, LOW); 
+    digitalWrite(MotFwd, HIGH);
+    delay(2200); // Quick clockwise turns.
+  }
+  
   // Normal mode (no movement).
   else {
     digitalWrite(MotFwd, LOW); 
@@ -80,6 +88,7 @@ void loop() {
   }
   
   // Read serial input to change mode.
+  //h=highMode; l=lowMode; t=tighten; ls=loosen; n=noMovement
   if (Serial.available() > 0) {
     String input = Serial.readStringUntil('\n');
     if (input.equals("h")) {
@@ -91,14 +100,23 @@ void loop() {
       isHighMode = false;
       isLowMode = true;
       tighten = false;
+      loosen = false;
     } else if (input.equals("t")) {
       isHighMode = false;
       isLowMode = false;
       tighten = true;
+      loosen = false;
     } else if (input.equals("l")) {
       isHighMode = false;
       isLowMode = false;
       tighten = false;
+      loosen = false;
+    } else if (input.equals("ls")) {
+      isHighMode = false;
+      isLowMode = false;
+      tighten = false;
+      loosen = true;
+      
     } else if (input.equals("n")) {
       isHighMode = false;
       isLowMode = false;
