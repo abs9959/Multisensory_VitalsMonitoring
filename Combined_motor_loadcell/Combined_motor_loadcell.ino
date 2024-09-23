@@ -17,7 +17,7 @@ bool isHighMode = false;         // Flag to indicate high mode.
 bool isLowMode = false;          // Flag to indicate low mode.
 bool tighten = false;
 bool loosen = false;
-
+bool normal = false;
 // Load cell pins
 const int LOADCELL_DOUT_PIN = 4;  //  Use a GPIO pin suitable for your ESP32 board
 const int LOADCELL_SCK_PIN = 18;  // Use a GPIO pin suitable for your ESP32 board
@@ -26,7 +26,7 @@ HX711 scale;
 
 //Constants
 float calibrationFactor = 0;      // Variable to store the calibration factor
-const float knownMass = 0.285;    // Mass in kilograms for calibration
+const float knownMass = 0.379;    // Mass in kilograms for calibration (weight = .285kg)
 const float gravity = 9.81;       // Acceleration due to gravity (m/s^2)
 float targetForce = 10.0; 
 
@@ -64,7 +64,7 @@ void loop() {
     loosen = false;
     normal = false;
 
-    String input = Serial.readStringUntil('\n').trim(); // trim() removes any extraneous newline or whitespace characters
+    String input = Serial.readStringUntil('\n');
 
     // Handle motor control commands
     if (input.equals("h")) {
@@ -107,7 +107,7 @@ void loop() {
     } else if (input.equals("f")) {
       Serial.print("Target force: ");
       while (Serial.available() == 0); // Wait for input
-      String targetInput = Serial.readStringUntil('\n').trim(); // Read user input for target force
+      String targetInput = Serial.readStringUntil('\n'); // Read user input for target force
       float targetForce = targetInput.toFloat(); // Convert the input to a float
 
       // Check if the conversion was successful (ensure targetForce is not NaN)
@@ -156,6 +156,7 @@ void motorControl() {
     digitalWrite(MotFwd, HIGH);
     delay(2200); 
   } else if (normal) {
+    Serial.println("Stopped");
     digitalWrite(MotFwd, LOW); 
     digitalWrite(MotRev, LOW); // No rotation
     delay(1000); // Delay in normal mode
