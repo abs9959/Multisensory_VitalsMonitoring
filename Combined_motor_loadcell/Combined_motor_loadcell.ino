@@ -34,7 +34,9 @@ HX711 scale;
 float calibrationFactor = 0;      // Variable to store the calibration factor
 const float knownMass = 0.379;    // Mass in kilograms for calibration (weight = .285kg)
 const float gravity = 9.81;       // Acceleration due to gravity (m/s^2)
-float targetForce = 0.0; 
+
+float targetForce = 10.0; 
+int motorRunTime = 2200; // Duration in milliseconds for motor operation
 
 void setup() {
   // Setup for motor control
@@ -97,6 +99,7 @@ void loop() {
       tighten = false;
       loosen = false;
 
+      //stop
       if (input.equals('n'){
         motorControl();    
       
@@ -165,14 +168,15 @@ void motorControl() {
     Serial.println("Tightening");
     digitalWrite(MotFwd, LOW); 
     digitalWrite(MotRev, HIGH);
-    delay(2200);
+    delay(motorRunTime);
 
   } else if (loosen) {
     Serial.println("Loosening");
     digitalWrite(MotRev, LOW); 
     digitalWrite(MotFwd, HIGH);
-    delay(2200); 
-  } else {
+    delay(motorRunTime);
+
+  } else{
     Serial.println("Stopped");
     digitalWrite(MotFwd, LOW); 
     digitalWrite(MotRev, LOW); // No rotation
@@ -180,6 +184,7 @@ void motorControl() {
   }
 
   measure();
+
 }
 
 void updateEncoder() {
@@ -251,7 +256,7 @@ void recalibrate() {
 
 void adjustMotorToForce(float targetForce) {
   bool notReached = true;
-  float threshold = 0.1;  // N of noise, determined based on resolution
+  float threshold = 0.1;  // N of noise, determined based on resolution [to adjust]
 
   while (notReached) {
     float currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
