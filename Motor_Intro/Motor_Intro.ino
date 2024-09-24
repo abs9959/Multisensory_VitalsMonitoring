@@ -121,6 +121,7 @@ void loop() {
       isHighMode = false;
       isLowMode = false;
       tighten = false;
+      loosen = false;
     }
   }
 }

@@ -20,7 +20,11 @@ bool loosen = false;
 bool normal = false;
 // Load cell pins
 const int LOADCELL_DOUT_PIN = 4;  //  Use a GPIO pin suitable for your ESP32 board
-const int LOADCELL_SCK_PIN = 18;  // Use a GPIO pin suitable for your ESP32 board
+const int LOADCELL_SCK_PIN = 22;  // Use a GPIO pin suitable for your ESP32 board
+
+unsigned long previousMillis = 0;  // Store the last time force was measured
+const long interval = 500;         // Interval at which to measure force (500 milliseconds)
+
 
 HX711 scale;
 
@@ -149,7 +153,8 @@ void motorControl() {
     Serial.println("Tightening");
     digitalWrite(MotFwd, LOW); 
     digitalWrite(MotRev, HIGH);
-    delay(2200); 
+    delay(2200);
+
   } else if (loosen) {
     Serial.println("Loosening");
     digitalWrite(MotRev, LOW); 

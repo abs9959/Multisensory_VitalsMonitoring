@@ -17,7 +17,6 @@ class VitalSignsMonitor:
         self.current_index = 0
         self.oxygen_saturation_values = []
         self.times = []
-        self.heart_rate_times = []
 
         # Layout configuration: 2 columns, 3 rows
         self.root.grid_columnconfigure(0, weight=1)
@@ -50,6 +49,27 @@ class VitalSignsMonitor:
         time_range = np.linspace(0, duration, len(ecg_signal))
         return time_range, ecg_signal
 
+    def generate_abp_curve(self, heart_rate, duration=5):
+        """Generate a synchronized ABP signal based on the heart rate."""
+        fs = 500  # Sampling frequency (Hz)
+        t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+        beat_interval = 60 / heart_rate  # Interval between beats
+
+        # Create a template for the ABP pulse
+        abp_template = (
+            np.maximum(0, 0.5 * (np.sin(2 * np.pi * 1.2 * t) + np.sin(2 * np.pi * 1.8 * t))) - 
+            0.3 * np.sin(2 * np.pi * 2.5 * t)
+        )
+        abp_template = (abp_template - np.min(abp_template)) / (np.max(abp_template) - np.min(abp_template))
+        abp_template *= 40  # Scale to a realistic range (e.g., 0-40 mmHg)
+
+        # Align the ABP pulses with the ECG peaks
+        num_beats = int(duration / beat_interval)
+        abp_signal = np.tile(abp_template, num_beats)
+        abp_signal = abp_signal[:len(t)]  # Truncate to match the length of t
+
+        return t, abp_signal
+
     def update_plot_loop(self):
         if self.data is not None:
             elapsed_time = time.time() - self.start_time
@@ -77,17 +97,20 @@ class VitalSignsMonitor:
                     self.axs[1].plot(time_range + self.times[-1], ecg_signal, 'lime', label='EKG Pulse')  # Neon green
                     self.axs[1].set_facecolor('black')
 
-                # Plot Oxygen Saturation as a line graph (bright blue)
-                self.axs[2].plot(self.times, self.oxygen_saturation_values, 'b-', marker='o')
-                self.axs[2].set_facecolor('black')
+                    # Plot synchronized ABP curve in the third row (red)
+                    time_range_abp, abp_signal = self.generate_abp_curve(heart_rate)
+                    self.axs[2].plot(time_range_abp + self.times[-1], abp_signal, 'red', label='ABP Curve')
+                    self.axs[2].set_facecolor('black')
 
-                # Apply black background to the plots and set white elements
+                # Apply black background to the plots and set black elements
                 for ax in self.axs:
                     ax.set_facecolor('black')
-                    ax.spines['bottom'].set_color('black')
+                    ax.spines['bottom'].set_color('black')  # Change bounding box to black
                     ax.spines['top'].set_color('black')
                     ax.spines['right'].set_color('black')
                     ax.spines['left'].set_color('black')
+
+                    # Set axis ticks and labels to black
                     ax.yaxis.label.set_color('black')
                     ax.xaxis.label.set_color('black')
                     ax.tick_params(axis='y', colors='black')

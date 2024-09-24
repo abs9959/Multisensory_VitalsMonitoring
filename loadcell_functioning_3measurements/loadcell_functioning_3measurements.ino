@@ -2,7 +2,7 @@
 
 // HX711 circuit wiring
 const int LOADCELL_DOUT_PIN = 4;  // Use a GPIO pin suitable for your ESP32 board
-const int LOADCELL_SCK_PIN = 18;  // Use a GPIO pin suitable for your ESP32 board
+const int LOADCELL_SCK_PIN = 17;  // Use a GPIO pin suitable for your ESP32 board (was 18)
 
 HX711 scale;
 
