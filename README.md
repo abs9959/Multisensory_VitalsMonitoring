@@ -21,7 +21,7 @@ Loadcell_functioning_3measurements requirements:
 ## How to Use
 
 1. **Motor Operation**: 
-   - Send motor control commands (`h`, `l`, `t`, `ls`, `n`) through the serial monitor to control the motor.  Note, in this version only does one cycle
+   - Send motor control commands (`h`, `l`, `t`, `ls`, `n`) through the serial monitor to control the motor. Note: only stops when 'n' or other operation is pressed
 
 2. **Take Force Measurements**: 
    - Use the `m` command to take 3 force readings from the load cell, which will be displayed in Newtons.
@@ -33,4 +33,3 @@ Loadcell_functioning_3measurements requirements:
    - Use the `r` command to recalibrate the load cell. Ensure you have a known mass on the load cell for accurate calibration.
 
 ## To do
-- Add a feature to log time vs force vs motor command for monitoring purposes.
