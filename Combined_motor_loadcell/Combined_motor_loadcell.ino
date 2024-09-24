@@ -284,7 +284,5 @@ void adjustMotorToForce(float targetForce) {
   }
 
   // Final force reading after loop ends 
-  float finalForce = scale.get_units(10); 
-  Serial.print("Final Force: ");
-  Serial.println(finalForce);
+  measure()
 }
