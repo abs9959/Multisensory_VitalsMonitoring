@@ -7,12 +7,14 @@
 #define MotFwd  19  // Motor Forward pin
 #define MotRev  32  // Motor Reverse pin
 
+//Encoder Pins
 int encoderPinA = 18; // Encoder Output 'A' must be connected to an interrupt pin of the Arduino.
 int encoderPinB = 2;  // Encoder Output 'B' must be connected to an interrupt pin of the Arduino.
 
 volatile long encoderValue = 0;  // Store the current position of the encoder.
 volatile int lastEncoded = 0; // Here updated value of encoder store.
 long homePosition = 0;           // Variable to store the initial position.
+
 bool isHighMode = false;         // Flag to indicate high mode.
 bool isLowMode = false;          // Flag to indicate low mode.
 bool tighten = false;
@@ -32,6 +34,7 @@ HX711 scale;
 float calibrationFactor = 0;      // Variable to store the calibration factor
 const float knownMass = 0.379;    // Mass in kilograms for calibration (weight = .285kg)
 const float gravity = 9.81;       // Acceleration due to gravity (m/s^2)
+
 float targetForce = 10.0; 
 int motorRunTime = 2200; // Duration in milliseconds for motor operation
 
@@ -63,43 +66,33 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     String input = Serial.readStringUntil('\n');
-
     // Handle motor control commands
     if (input.equals("h")) {
       isHighMode = true;
-
       isLowMode = false;
       tighten = false;
       loosen = false;
       motorControl();
-
     } else if (input.equals("l")) {
       isLowMode = true;
-
       isHighMode = false;
       tighten = false;
       loosen = false;
-      normal = false;
       motorControl();
-
     } else if (input.equals("t")) {
       tighten = true;
-
       isHighMode = false;
       isLowMode = false;
       loosen = false;
-      normal = false;
       motorControl();
-
     } else if (input.equals("ls")) {
       loosen = true;
-
       isHighMode = false;
       isLowMode = false;
       tighten = false;
-      normal = false;
       motorControl();
 
+    //no motor function performed
     } else {
       isHighMode = false;
       isLowMode = false;
@@ -107,42 +100,47 @@ void loop() {
       loosen = false;
 
       //stop
-      if (input.equals("n")) {
-        motorControl();
-
-      // load cell commands
-      } else if (input.equals("m")) {
-        for (int i = 0; i < 3; i++) {
-        float force = scale.get_units(10); // Get the force in Newtons
-        Serial.print("Measurement ");
-        Serial.print(i + 1);
-        Serial.print(": ");
-        Serial.print(force);
-        Serial.println(" N"); // Display force in Newtons
-        delay(1000);  // Delay between measurements (1s)
+      if (input.equals('n'){
+        motorControl();    
+      
+      // Measure force
+      } else if (input.equals("m")) {  
+          measure();
+        
+        // Recalibrate the load cell
+        } else if (input.equals("r")) { 
+            recalibrate();
+      
+        // Adjust motor to target force
+        } else if (input.equals("f")) {
+            Serial.print("Target force: ");
+            while (Serial.available() == 0);  // Wait for input
+            String targetInput = Serial.readStringUntil('\n');  // Read user input for target force
+            float targetForce = targetInput.toFloat();  // Convert the input to a float
+            if (targetForce != 0 || targetInput.equals("0")) {  // Valid check for 0 as well
+              adjustMotorToForce(targetForce);
+            } else {
+            Serial.println("Invalid force input. Please provide a numeric value.");
+            }
         }
-      } else if (input.equals("r")) { 
-        recalibrate();
-
-
-      } else if (input.equals("f")) {
-        Serial.print("Target force: ");
-        while (Serial.available() == 0); // Wait for input
-        String targetInput = Serial.readStringUntil('\n'); // Read user input for target force
-        float targetForce = targetInput.toFloat(); // Convert the input to a float
-
-        // Check if the conversion was successful (ensure targetForce is not NaN)
-        if (targetForce != 0 || targetInput.equals("0")) {  // Valid check for 0 as well
-          adjustMotorToForce(targetForce);
-        } else {
-          Serial.println("Invalid force input. Please provide a numeric value.");
-          }
     }
   }
 }
 
 
 // Functions
+void measure(){
+  for (int i = 0; i < 3; i++) {
+    float force = scale.get_units(10);  // Get the force in Newtons
+    Serial.print("Measurement ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.print(force);
+    Serial.println(" N");
+    delay(1000);  // Delay between measurements (1s)
+  }
+}
+
 // Motor Control Function
 void motorControl() {
   if (isHighMode) {
@@ -185,7 +183,8 @@ void motorControl() {
     delay(1000); // Delay in normal mode
   }
 
-  //force reading
+  measure();
+
 }
 
 void updateEncoder() {
