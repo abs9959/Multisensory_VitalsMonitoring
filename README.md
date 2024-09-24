@@ -34,5 +34,3 @@ Loadcell_functioning_3measurements requirements:
 
 ## To do
 - Add a feature to log time vs force vs motor command for monitoring purposes.
--  **GPIO Pin 18** being used for both the encoder and the load cell ?
-- Figure out why load cell part does not work
