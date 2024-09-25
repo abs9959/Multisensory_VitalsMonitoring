@@ -36,7 +36,7 @@ const float knownMass = 0.379;    // Mass in kilograms for calibration (weight =
 const float gravity = 9.81;       // Acceleration due to gravity (m/s^2)
 
 float targetForce = 10.0; 
-int motorRunTime = 2200; // Duration in milliseconds for motor operation
+int motorRunTime = 100; // Duration in milliseconds for motor operation
 
 void setup() {
   // Setup for motor control
@@ -73,24 +73,31 @@ void loop() {
       tighten = false;
       loosen = false;
       motorControl();
+      measure();
+
     } else if (input.equals("l")) {
       isLowMode = true;
       isHighMode = false;
       tighten = false;
       loosen = false;
       motorControl();
+      measure();
+
     } else if (input.equals("t")) {
       tighten = true;
       isHighMode = false;
       isLowMode = false;
       loosen = false;
       motorControl();
+      measure();
+
     } else if (input.equals("ls")) {
       loosen = true;
       isHighMode = false;
       isLowMode = false;
       tighten = false;
       motorControl();
+      measure();
 
     //no motor function performed
     } else {
@@ -100,19 +107,19 @@ void loop() {
       loosen = false;
 
       //stop
-      if (input.equals('n'){
-        motorControl();    
-      
+      if (input.equals("n")){
+        motorControl();  
+        measure();
       // Measure force
       } else if (input.equals("m")) {  
           measure();
         
         // Recalibrate the load cell
-        } else if (input.equals("r")) { 
+      } else if (input.equals("r")) { 
             recalibrate();
       
         // Adjust motor to target force
-        } else if (input.equals("f")) {
+      } else if (input.equals("f")) {
             Serial.print("Target force: ");
             while (Serial.available() == 0);  // Wait for input
             String targetInput = Serial.readStringUntil('\n');  // Read user input for target force
@@ -131,13 +138,13 @@ void loop() {
 // Functions
 void measure(){
   for (int i = 0; i < 3; i++) {
-    float force = scale.get_units(10);  // Get the force in Newtons
+    float force = scale.get_units(3);  // Get the force in Newtons
     Serial.print("Measurement ");
     Serial.print(i + 1);
     Serial.print(": ");
     Serial.print(force);
     Serial.println(" N");
-    delay(1000);  // Delay between measurements (1s)
+    delay(10);  // Delay between measurements (1s)
   }
 }
 
@@ -182,8 +189,6 @@ void motorControl() {
     digitalWrite(MotRev, LOW); // No rotation
     delay(1000); // Delay in normal mode
   }
-
-  measure();
 
 }
 
@@ -256,12 +261,13 @@ void recalibrate() {
 
 void adjustMotorToForce(float targetForce) {
   bool notReached = true;
-  float threshold = 0.1;  // N of noise, determined based on resolution [to adjust]
+  float threshold = 0.4;  // N of noise, determined based on resolution [to adjust]
 
   while (notReached) {
     float currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
     Serial.print("Current Force: ");
     Serial.println(currentForce);
+
 
     if (abs(targetForce - currentForce) <= threshold) {
       notReached = false;
@@ -284,5 +290,5 @@ void adjustMotorToForce(float targetForce) {
   }
 
   // Final force reading after loop ends 
-  measure()
+  measure();
 }
