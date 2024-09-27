@@ -260,35 +260,28 @@ void recalibrate() {
 
 
 void adjustMotorToForce(float targetForce) {
-  bool notReached = true;
-  float threshold = 0.4;  // N of noise, determined based on resolution [to adjust]
+  float threshold = 0.4;  // Noise threshold in Newtons
+  float currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
 
-  while (notReached) {
-    float currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
+  // Determine initial adjustment direction
+  tighten = currentForce < targetForce;  // Start by tightening if force is too low
+  loosen = currentForce > targetForce;   // Start by loosening if force is too high
+
+  // Loop until the current force is within the acceptable threshold
+  while (abs(targetForce - currentForce) > threshold) {
+    currentForce = scale.get_units(10);  // Read force in Newtons, average of 10 readings
     Serial.print("Current Force: ");
     Serial.println(currentForce);
 
-
-    if (abs(targetForce - currentForce) <= threshold) {
-      notReached = false;
-      break;  // Target force has been reached within the threshold
-    } 
-    else {
-      if (currentForce < targetForce) {
-        tighten = true;
-        motorControl(); 
-        tighten = false;
-      }
-      else {
-        loosen = true;
-        motorControl(); 
-        loosen = false;
-      }
-
-      delay(100);  // Add a small delay to stabilize readings
+    // Adjust motor based on the initial direction until the target force is reached
+    if ((tighten && currentForce < targetForce) || ((loosen && currentForce > targetForce))) {
+    } else {
+      tighten = loosen = false;
+      break;  // If the motor overshoots or is within the threshold, stop the adjustment
     }
+    motorControl();
+    delay(100);  // Small delay to stabilize readings
   }
-
-  // Final force reading after loop ends 
+  
   measure();
 }
