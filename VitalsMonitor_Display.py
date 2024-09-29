@@ -118,11 +118,15 @@ class VitalSignsMonitor:
                     time_range_abp, abp_signal = self.generate_abp_curve(heart_rate)
                     self.axs[1].plot(time_range_abp + self.times[-1], abp_signal, 'red', label='ABP Curve')
                     self.axs[1].set_facecolor('black')
+                    self.axs[1].set_ylim(-2, 2)  # Set y-axis limits for the middle graph
+
                     print(min(abp_signal))
 
                     # Plot the same curve for O2 saturation in the third row (bright blue)
                     self.axs[2].plot(time_range_abp + self.times[-1], abp_signal*0.6, 'cyan', label='O2 Saturation Curve')  # Bright blue
                     self.axs[2].set_facecolor('black')
+                    self.axs[2].set_ylim(-2, 2)  # Set y-axis limits for the middle graph
+
 
                 # Apply black background and black elements to the plots
                 for ax in self.axs:
